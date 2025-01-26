@@ -12,40 +12,52 @@ def extract_text_from_pdf(file_path):
     return text
 
 # Function to extract and classify clauses
+def split_into_paragraphs(text):
+    # Split text into paragraphs based on line breaks
+    paragraphs = text.split("\n")
+    paragraphs = [para.strip() for para in paragraphs if para.strip()]  # Remove empty lines
+    return paragraphs
+
 def extract_and_classify_clauses(text):
+    # Define clause patterns and associated business areas
     patterns = {
         "Care Contingency / Patient Care Safeguard": {
-            "pattern": r"(.*continuity of care.*|.*patient care.*)",
+            "pattern": r"(continuity of care|patient care)",
             "business_area": "Operational Risk Management",
         },
         "Contract Administration / Notices": {
-            "pattern": r"(.*policy updates.*|.*emergency admission.*|.*changes to required documentation.*)",
+            "pattern": r"(policy updates|emergency admission|changes to required documentation)",
             "business_area": "Operational Risk Management",
         },
         "Revenue Cycle Management": {
-            "pattern": r"(.*requests for additional information.*|.*overpayment recovery.*|.*claim denial resolution.*)",
+            "pattern": r"(requests for additional information|overpayment recovery|claim denial resolution)",
             "business_area": "Financial Risk Management",
         },
         "Billing and Collection": {
-            "pattern": r"(.*prohibited billing practices.*|.*false claims.*|.*billing compliance.*)",
+            "pattern": r"(prohibited billing practices|false claims|billing compliance)",
             "business_area": "Financial Risk Management",
         },
         "Contract Termination": {
-            "pattern": r"(.*termination notice.*|.*termination process.*)",
+            "pattern": r"(termination notice|termination process)",
             "business_area": "Operational Risk Management",
         },
     }
+
     clauses = []
-    for category, details in patterns.items():
-        matches = re.finditer(details["pattern"], text, flags=re.IGNORECASE | re.DOTALL)
-        for match in matches:
-            clause_text = match.group(0).strip()
-            clauses.append({
-                "Obligation Type": category,
-                "Description": clause_text,
-                "Business Area": details["business_area"],
-            })
+    paragraphs = split_into_paragraphs(text)  # Split the document into paragraphs
+
+    for para in paragraphs:
+        for category, details in patterns.items():
+            # Match patterns in each paragraph
+            if re.search(details["pattern"], para, flags=re.IGNORECASE):
+                clauses.append({
+                    "Obligation Type": category,
+                    "Description": para.strip(),  # Use the entire paragraph as the clause
+                    "Business Area": details["business_area"],
+                })
+
     return clauses
+
 
 # Function to create a structured table
 def create_table(clauses):
